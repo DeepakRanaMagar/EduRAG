@@ -8,7 +8,7 @@ class KnowledgeBase(models.Model):
     grade = models.CharField(max_length=255)
     content = models.FileField(max_length=255, upload_to='contents/%Y/%m/%d/')
 
-    embedding = VectorField(dimensions=768, null=True, blank=True)
+    embedding = VectorField(dimensions=384, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
