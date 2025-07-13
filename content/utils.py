@@ -1,6 +1,7 @@
 from sentence_transformers import SentenceTransformer
 from django.db.models import F
 from pgvector.django import CosineDistance
+from django.db import connection
 
 from .models import KnowledgeBase
 
@@ -44,11 +45,20 @@ def generate_answer_from_api(context: str, question: str, persona: str = "friend
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 
-def retrieve_vector(query, top_k=3):
+def retrieve_vector(query, top_k=3, threshold=0.7):
     '''
-        Handles retrival of the vector nearest to the query
+    Handles retrieval of the vector nearest to the query
     '''
     query_vector = model.encode(query).tolist()
-    return KnowledgeBase.objects.annotate(
-        similarity=CosineDistance("embedding", query_vector)
-    ).order_by('similarity')[:top_k]
+
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT id, 1 - (embedding <=> %s::vector) AS similarity
+            FROM content_knowledgebase
+            ORDER BY embedding <=> %s::vector
+            LIMIT %s
+        """, [query_vector, query_vector, top_k])
+        rows = cursor.fetchall()
+        top_ids = [row[0] for row in rows if row[1] >= threshold]
+
+    return KnowledgeBase.objects.filter(id__in=top_ids)
