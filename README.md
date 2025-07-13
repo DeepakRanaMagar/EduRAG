@@ -27,7 +27,7 @@ EduRAG is an intelligent educational platform that combines document management 
 | `/topics/` | GET | List available topics (filterable by grade) |
 | `/grades/` | GET | List all grade levels in system |
 | `/metrics/` | GET | Get system statistics |
-| `/ask-question/` | POST | Get AI-generated answers to questions |
+| `/ask/` | POST | Get AI-generated answers to questions |
 
 ## Setup Instructions
 ### Build containers
