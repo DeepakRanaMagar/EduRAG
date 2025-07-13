@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from .utils import retrieve_vector
+from .utils import retrieve_vector, generate_answer_from_api
 from .serializers import KnowledgeBaseSerializer
 from .models import KnowledgeBase
 
@@ -31,7 +31,19 @@ class AskQuestionAPIView(APIView):
             Handles the question and retrival of the answer
         """
         query = request.data.get("query")
-        print("question: ", query)
+        personas = ['friendly', 'strict', 'humorous']
+        persona = request.data.get("persona")
+        if persona not in personas:
+            return Response({"error": f"Persona should be one of {personas}"}, status=400)
+
         retrieved_vector = retrieve_vector(query)
-        print("answer: ", retrieved_vector)
-        return Response("working...", status=200)
+        context = "\n\n".join([
+            doc.content.read().decode('utf-8') if hasattr(doc.content,
+                                                          'read') else open(doc.content.path).read()
+            for doc in retrieved_vector
+        ])
+        answer = generate_answer_from_api(context, query, persona)
+        data = {
+            "message": answer
+        }
+        return Response(data, status=200)
