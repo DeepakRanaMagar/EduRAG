@@ -52,8 +52,20 @@ class AskQuestionAPIView(APIView):
         return Response(data, status=200)
 
 
+class GradeListView(ListAPIView):
+    http_method_names = ['get']
+
+    def get_queryset(self):
+        qs = KnowledgeBase.objects.all()
+        return qs.values('grade').distinct()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        topics = [item['grade'] for item in queryset]
+        return Response({"grades": topics}, status=200)
+
+
 class TopicsListView(ListAPIView):
-    serializer_class = KnowledgeBaseSerializer
     http_method_names = ['get']
 
     def get_queryset(self):
