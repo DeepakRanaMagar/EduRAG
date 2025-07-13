@@ -12,3 +12,7 @@ class KnowledgeBaseSerializer(serializers.ModelSerializer):
     def validate_content(self, value):
         if not value.name.endswith('.txt'):
             raise serializers.ValidationError("Only .txt files are allowed.")
+        return value
+
+    def create(self, validated_data):
+        return KnowledgeBase.objects.create(**validated_data)
