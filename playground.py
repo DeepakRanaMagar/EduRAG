@@ -104,47 +104,74 @@ if __name__ == "__main__":
     # ---- Chat UI ----
     if all(selections.values()):
         st.header("💬 Ask a Question")
-
         # Session state to store chat history
-        if "chat_history" not in st.session_state:
-            st.session_state.chat_history = []
+        # if "chat_history" not in st.session_state:
+        #     st.session_state.chat_history = []
 
         # Message input
         user_input = st.chat_input("Type your question here...")
 
         if user_input:
             # Add user message to chat
-            st.session_state.chat_history.append(("user", user_input))
+            # st.session_state.chat_history.append(("user", user_input))
 
             # Show loading spinner
             with st.spinner("Thinking..."):
                 try:
+                    # Prepare request payload
+                    payload = {
+                        "query": user_input,
+                        "persona": selections["persona"],
+                    }
+
+                    # Debug: Print the payload being sent
+                    # st.write("**Debug Info:**")
+                    # st.write(f"API URL: {API_BASE}/ask/")
+                    # st.write(f"Payload: {payload}")
+                    # st.write(f"Selections: {selections}")
+
                     # Send to backend
                     response = requests.post(
                         f"{API_BASE}/ask/",
-                        json={
-                            "query": user_input,
-                            "persona": selections["persona"],
+                        json=payload,
+                        headers={
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
                         },
-                        timeout=10
+                        timeout=120
                     )
+
+                    # Debug: Print response details
+                    # st.write(f"Response Status: {response.status_code}")
+                    # st.write(f"Response Headers: {dict(response.headers)}")
+
+                    if response.status_code != 200:
+                        st.write(f"Response Text: {response.text}")
+
                     response.raise_for_status()
                     data = response.json()
-                    ai_response = data.get("answer", "No answer returned.")
+                    ai_response = data.get("message", "No answer returned.")
+
+                except requests.exceptions.RequestException as e:
+                    ai_response = f"❌ Network Error: {str(e)}"
+                    # Show more detailed error info
+                    if hasattr(e, 'response') and e.response is not None:
+                        st.write(f"Error Response: {e.response.text}")
                 except Exception as e:
                     ai_response = f"❌ Error: {str(e)}"
 
             # Add AI response to chat
-            st.session_state.chat_history.append(("ai", ai_response))
-
+            # st.session_state.chat_history.append(("ai", ai_response))
+            with st.chat_message("assistant"):
+                st.markdown(ai_response)
         # Display chat history
-        for sender, message in st.session_state.chat_history:
-            if sender == "user":
-                with st.chat_message("user"):
-                    st.markdown(message)
-            else:
-                with st.chat_message("assistant"):
-                    st.markdown(message)
+        # for sender, message in st.session_state.chat_history:
+        #     if sender == "user":
+        #         with st.chat_message("user"):
+        #             st.markdown(message)
+        #     else:
+        #         with st.chat_message("assistant"):
+        #             st.markdown(message)
 
     # Use the selections in your main app
     if all(selections.values()):
