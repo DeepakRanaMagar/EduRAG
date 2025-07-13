@@ -1,4 +1,4 @@
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -50,3 +50,38 @@ class AskQuestionAPIView(APIView):
             "message": answer
         }
         return Response(data, status=200)
+
+
+class TopicsListView(ListAPIView):
+    serializer_class = KnowledgeBaseSerializer
+    http_method_names = ['get']
+
+    def get_queryset(self):
+        grade = self.request.query_params.get('grade')
+
+        qs = KnowledgeBase.objects.all()
+
+        if grade:
+            qs = qs.filter(grade=grade)
+
+        return qs.values('topic').distinct()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        topics = [item['topic'] for item in queryset]
+        return Response({"topics": topics}, status=200)
+
+
+class MetricsView(APIView):
+    def get(self, request):
+        total_topics = KnowledgeBase.objects.values(
+            "topic").distinct().count()
+        total_files = KnowledgeBase.objects.count()
+        total_grades = KnowledgeBase.objects.values(
+            "grade").distinct().count()
+
+        return Response({
+            "total_topics": total_topics,
+            "total_files_uploaded": total_files,
+            "total_grades": total_grades
+        }, status=200)
