@@ -110,68 +110,67 @@ if __name__ == "__main__":
 
         # Message input
         user_input = st.chat_input("Type your question here...")
+        # Even simpler version - just replace your existing chat section:
 
         if user_input:
-            # Add user message to chat
-            # st.session_state.chat_history.append(("user", user_input))
+            if not selections["persona"]:
+                st.error("Please select a persona before asking a question.")
+            else:
+                with st.spinner("Thinking..."):
+                    try:
+                        payload = {
+                            "query": user_input,
+                            "persona": selections["persona"]
+                        }
 
-            # Show loading spinner
-            with st.spinner("Thinking..."):
-                try:
-                    # Prepare request payload
-                    payload = {
-                        "query": user_input,
-                        "persona": selections["persona"],
-                    }
+                        response = requests.post(
+                            f"{API_BASE}/ask/",
+                            json=payload,
+                            headers={
+                                "Content-Type": "application/json",
+                                "Accept": "application/json"
+                            },
+                            timeout=120
+                        )
 
-                    # Debug: Print the payload being sent
-                    # st.write("**Debug Info:**")
-                    # st.write(f"API URL: {API_BASE}/ask/")
-                    # st.write(f"Payload: {payload}")
-                    # st.write(f"Selections: {selections}")
+                        # Handle response based on status code
+                        if response.status_code == 200:
+                            data = response.json()
+                            ai_response = data.get(
+                                "message", "No answer returned.")
 
-                    # Send to backend
-                    response = requests.post(
-                        f"{API_BASE}/ask/",
-                        json=payload,
-                        headers={
-                            "Content-Type": "application/json",
-                            "Accept": "application/json"
-                        },
-                        timeout=120
-                    )
+                        elif response.status_code == 400:
+                            try:
+                                error_data = response.json()
+                                if "No Information found" in error_data.get("message", ""):
+                                    ai_response = "🤔 I don't have information about that topic in my knowledge base. Try asking about different topics or using more general terms."
+                                else:
+                                    ai_response = f"❌ {error_data.get(
+                                        'error', error_data.get('message', 'Invalid request'))}"
+                            except ValueError:
+                                ai_response = "❌ Invalid response format"
 
-                    # Debug: Print response details
-                    # st.write(f"Response Status: {response.status_code}")
-                    # st.write(f"Response Headers: {dict(response.headers)}")
+                        else:
+                            ai_response = f"❌ Request failed with status {
+                                response.status_code}"
 
-                    if response.status_code != 200:
-                        st.write(f"Response Text: {response.text}")
+                    except requests.exceptions.Timeout:
+                        ai_response = "⏱️ Request timed out. Please try again with a shorter question."
+                    except requests.exceptions.ConnectionError:
+                        ai_response = "🔌 Connection failed. Please check if the server is running."
+                    except Exception as e:
+                        ai_response = f"❌ Unexpected error: {str(e)}"
 
-                    response.raise_for_status()
-                    data = response.json()
-                    ai_response = data.get("message", "No answer returned.")
-
-                except requests.exceptions.RequestException as e:
-                    ai_response = f"❌ Network Error: {str(e)}"
-                    # Show more detailed error info
-                    if hasattr(e, 'response') and e.response is not None:
-                        st.write(f"Error Response: {e.response.text}")
-                except Exception as e:
-                    ai_response = f"❌ Error: {str(e)}"
-
-            # Add AI response to chat
-            # st.session_state.chat_history.append(("ai", ai_response))
-            with st.chat_message("assistant"):
-                st.markdown(ai_response)
-        # Display chat history
-        # for sender, message in st.session_state.chat_history:
-        #     if sender == "user":
-        #         with st.chat_message("user"):
-        #             st.markdown(message)
-        #     else:
-        #         with st.chat_message("assistant"):
-        #             st.markdown(message)
+                # Always display the response
+                with st.chat_message("assistant"):
+                    if ai_response.startswith("❌"):
+                        st.error(ai_response)
+                    elif ai_response.startswith("🤔"):
+                        st.warning(ai_response)
+                    elif ai_response.startswith("⏱️") or ai_response.startswith("🔌"):
+                        st.info(ai_response)
+                    else:
+                        st.markdown(ai_response)
 
     # Use the selections in your main app
     if all(selections.values()):
