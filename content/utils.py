@@ -24,7 +24,7 @@ def build_rag_prompt(context: str, question: str, persona: str = "friendly") -> 
 
     system_prompt = system_personas.get(persona, system_personas["friendly"])
 
-    return f"""<|system|>\n{system_prompt}\n<|user|>\nUse the following context to answer the question:\n\n{context}\n\nQuestion: {question}\n<|assistant|>"""
+    return f"""<|system|>\n{system_prompt}\n<|user|>\nUse the following context to answer the question as a tutor:\n\n{context}\n\nQuestion: {question}\n<|assistant|>"""
 
 
 def generate_answer_from_api(context: str, question: str, persona: str = "friendly", max_tokens: int = 256):
@@ -33,13 +33,14 @@ def generate_answer_from_api(context: str, question: str, persona: str = "friend
         model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
         messages=[
             {"role": "system", "content": prompt},
-            {"role": "user", "content": f"Use the following context to answer the question:\n\n{
+            {"role": "user", "content": f"Use the following context to answer the question as a tutor:\n\n{
                 context}\n\nQuestion: {question}"}
         ],
         temperature=0.7,
         max_tokens=max_tokens
     )
-    return response.choices[0].message["content"]
+    # print("response: ", response)
+    return response.choices[0].message.content
 
 
 model = SentenceTransformer('all-MiniLM-L6-v2')
