@@ -1,0 +1,62 @@
+postgres_data
+# Ignore Python bytecode files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Ignore virtual environments
+venv/
+env/
+.venv/
+
+# Ignore local configuration files
+*.env
+*.local
+.local/
+
+# Ignore static and media files (they should be generated later in the container)
+static/
+media/
+
+# Ignore logs
+*.log
+
+# Ignore IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore Docker-related files if not needed
+docker-compose.override.yml
+Dockerfile*
+
+# Ignore test and coverage-related files
+.coverage
+nosetests.xml
+*.cover
+*.tox
+*.nox
+*.hypothesis
+
+# Ignore any other unnecessary files or directories
+node_modules/
+postgres_data/
+
+venv/
+postgres_data/
+*.pyc
+__pycache__/
+.git/
+.env
+es_data/
+
+pull.sh%
