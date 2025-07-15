@@ -37,8 +37,8 @@ class AskQuestionAPIView(APIView):
             return Response({"error": f"Persona should be one of {personas}"}, status=400)
 
         retrieved_vector = retrieve_vector(query)
-        if not retrieved_vector.exists():
-            return Response({"message": "Sorry, No Information found in the request query."}, status=400)
+        # if not retrieved_vector.exists():
+        #     return Response({"message": "Sorry, No Information found in the request query."}, status=400)
 
         context = "\n\n".join([
             doc.content.read().decode('utf-8') if hasattr(doc.content,
